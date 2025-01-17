@@ -1,0 +1,73 @@
+#!/usr/bin/env python3
+
+import pathlib
+from operator import itemgetter
+
+# define data directory
+data_dir = pathlib.Path('/Users/------/Downloads/HTB/coding_computational_recruiting/data.txt')
+
+#skill weights
+health_weight = 0.2
+agility_weight = 0.3
+charisma_weight = 0.1
+knowledge_weight = 0.05
+energy_weight = 0.05
+resourcefulness_weight = 0.3
+
+# function to calculate skills scores
+# <skill>_score = round(6 * (int(s) * <skill>_weight)) + 10
+def skill_score(individual_score, skill_weight):
+    value = round(6 * individual_score * skill_weight) + 10
+    return value
+
+# create a functino that creates an overall value for each recruit given their skills
+#overall_value = round(5 * ((health * 0.18) + (agility * 0.20) + (charisma * 0.21) + (knowledge * 0.08) + (energy * 0.17) + (resourcefulness * 0.16)))
+def recruit_overall_value(dict_object):
+    overall_value = round(5 * ((dict_object["health"] * 0.18) +
+                               (dict_object["agility"] * 0.20) +
+                               (dict_object["charisma"] * 0.21) +
+                               (dict_object["knowledge"] * 0.08) +
+                               (dict_object["energy"] * 0.17) +
+                               (dict_object["resourcefulness"] * 0.16)))
+    fn = dict_object["first_name"]
+    ln = dict_object["last_name"]
+
+    return fn, ln, int(overall_value)
+
+
+recruit_list = []
+final_recruit_list = []
+initial_list = []
+sanitized_list = []
+#open file and read contents
+with open(data_dir, "r", encoding='utf8') as f:
+    for line in f:
+        initial_list.append(line)
+
+#scrub out the headers, '=' characters, and empty lines
+for item in initial_list:
+    if '=' not in item and 'First' not in item and len(item) > 1:
+        sanitized_list.append(item)
+
+#fill a list of dictionaries, with each dictionary containing a recruit name and their skill scores * skill weight
+for item in sanitized_list:
+    recruit_list.append({'first_name': item.split()[0], \
+                         'last_name': item.split()[1], \
+                         'health': skill_score(int(item.split()[2]), health_weight), \
+                         'agility': skill_score(int(item.split()[3]), agility_weight), \
+                         'charisma': skill_score(int(item.split()[4]), charisma_weight), \
+                         'knowledge':skill_score(int(item.split()[5]), knowledge_weight), \
+                         'energy': skill_score(int(item.split()[6]),  energy_weight),\
+                         'resourcefulness':skill_score(int(item.split()[7]), resourcefulness_weight)})
+
+#create a final list that will hold each recruit and their calculated overall value
+for r in recruit_list:
+    final_recruit_list.append(recruit_overall_value(r))
+
+#sort and print out the string to be pasted in to the challenge prompt
+report_list = sorted(final_recruit_list, key=itemgetter(2), reverse=True)
+
+formatted_list = []
+for item in report_list[0:14]:
+    formatted_list.append(item[0] + ' ' + item[1] + ' - ' + str(item[2]))
+print(', '.join(formatted_list))
